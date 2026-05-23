@@ -58,16 +58,16 @@ export default function ProductDetail() {
       </section>
 
       <section className="section"><div className="container">
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:50,alignItems:'start'}}>
-          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} style={{background:'var(--white)',borderRadius:'var(--radius-xl)',height:400,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'var(--shadow-lg)'}}>
-            {product.images && product.images[0] ? <img src={product.images[0].startsWith('http') ? product.images[0] : `${API_URL}${product.images[0]}`} alt={product.name} style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'var(--radius-xl)'}} /> : <FaBoxOpen size={80} color="var(--blue)"/>}
+        <div className="product-detail-grid">
+          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} className="product-detail-image-wrapper">
+            {product.images && product.images[0] ? <img src={product.images[0].startsWith('http') ? product.images[0] : `${API_URL}${product.images[0]}`} alt={product.name} /> : <FaBoxOpen size={80} color="var(--blue)"/>}
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
+          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} className="product-detail-info-wrapper">
             <span className="badge badge-blue">{product.category?.name || 'Product'}</span>
             <h2 style={{marginTop:12,marginBottom:16}}>{product.name}</h2>
             <p style={{color:'var(--grey)',lineHeight:1.8,marginBottom:24}}>{product.shortDescription}</p>
             {product.features?.length>0 && (<><h4 style={{marginBottom:12}}>Key Features</h4><ul style={{marginBottom:24}}>{product.features.map((f,i)=><li key={i} style={{display:'flex',gap:8,alignItems:'center',marginBottom:8,color:'var(--grey-dark)'}}><FaCheckCircle style={{color:'var(--orange)',flexShrink:0}}/>{f}</li>)}</ul></>)}
-            <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+            <div className="product-detail-buttons">
               <button onClick={() => setModalOpen(true)} className="btn btn-primary btn-lg"><FaEnvelope/> Get Quote</button>
               <a href="https://wa.me/917383411611" target="_blank" rel="noreferrer" className="btn btn-lg" style={{background:'#25d366',color:'#fff',borderColor:'#25d366'}}><FaWhatsapp/> WhatsApp</a>
               <a href="tel:+917383411611" className="btn btn-secondary btn-lg"><FaPhone/> Call Now</a>

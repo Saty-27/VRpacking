@@ -43,7 +43,8 @@ export default function Header() {
     <header className={`header ${scrolled ? 'scrolled' : ''}`}>
       <div className="container header-inner">
         <Link to="/" className="header-logo">
-          <img src="/logo.png" alt="VR Packaging Solutions Logo" style={{ height: '68px', width: 'auto', objectFit: 'contain' }} />
+          <img src="/logo.png" alt="VR Packaging Solutions Logo" className="logo-img" />
+          <span className="logo-text"><span className="logo-text-orange">VR</span>Packing</span>
         </Link>
 
         <nav className={`header-nav ${menuOpen ? 'open' : ''}`}>

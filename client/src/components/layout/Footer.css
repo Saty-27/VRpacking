@@ -24,8 +24,8 @@
 .contact-item a { color: rgba(255,255,255,0.6); }
 .contact-item a:hover { color: var(--orange); }
 
-.footer-map { margin-top: 16px; border-radius: var(--radius-md); overflow: hidden; }
-.footer-map iframe { border-radius: var(--radius-md); }
+.footer-map { margin-top: 16px; border-radius: var(--radius-md); overflow: hidden; width: 100%; }
+.footer-map iframe { border-radius: var(--radius-md); width: 100% !important; max-width: 100% !important; height: 260px !important; }
 
 .footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding: 20px 0; }
 .footer-bottom-inner { display: flex; justify-content: space-between; align-items: center; }

@@ -49,7 +49,7 @@ export default function Gallery() {
       <section className="section">
         <div className="container">
           {/* Category Filter */}
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 44 }}>
+          <div className="category-filter-wrap">
             {categories.map(c => (
               <button
                 key={c}
@@ -68,7 +68,6 @@ export default function Gallery() {
               <div
                 key={img._id}
                 className="gallery-thumb"
-                style={{ height: '280px', position: 'relative', overflow: 'hidden' }}
               >
                 {img.image
                   ? <img
