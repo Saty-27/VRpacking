@@ -28,14 +28,51 @@ export default function BlogDetail() {
       <section className="page-hero" style={{ backgroundImage: `linear-gradient(135deg, rgba(17,24,39,0.95), rgba(17,24,39,0.95)), url(${blog.featuredImage ? (blog.featuredImage.startsWith('http') ? blog.featuredImage : API_URL + blog.featuredImage) : '/world_map_bg.jpg'})` }}><div className="container"><h1>{blog.title}</h1><div style={{display:'flex',gap:20,justifyContent:'center',color:'rgba(255,255,255,0.7)',fontSize:'0.9rem',marginTop:12}}><span style={{display:'flex',alignItems:'center',gap:6}}><FaUser/>{blog.author}</span><span style={{display:'flex',alignItems:'center',gap:6}}><FaTag/>{blog.category}</span></div><div className="breadcrumb" style={{justifyContent:'center',color:'rgba(255,255,255,0.6)'}}><Link to="/" style={{color:'rgba(255,255,255,0.8)'}}>Home</Link> / <Link to="/blog" style={{color:'rgba(255,255,255,0.8)'}}>Blog</Link> / <span style={{color:'var(--white)'}}>{blog.title}</span></div></div></section>
 
       <section className="section"><div className="container" style={{maxWidth:800,margin:'0 auto'}}>
-        {blog.featuredImage && (
-          <div style={{ width: '100%', height: 'auto', maxHeight: 400, borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: 30, boxShadow: 'var(--shadow-md)' }}>
-            <img 
-              src={blog.featuredImage.startsWith('http') ? blog.featuredImage : `${API_URL}${blog.featuredImage}`} 
-              alt={blog.title} 
-              style={{ width: '100%', height: '100%', objectFit: 'cover', maxHeight: 400 }} 
-            />
+        {blog.videoType && blog.videoType !== 'none' && blog.videoUrl ? (
+          <div style={{ 
+            width: '100%', 
+            position: 'relative', 
+            paddingTop: '56.25%', /* 16:9 Aspect Ratio */
+            borderRadius: 'var(--radius-lg)', 
+            overflow: 'hidden', 
+            marginBottom: 30, 
+            boxShadow: 'var(--shadow-md)',
+            background: '#000'
+          }}>
+            {blog.videoType === 'youtube' ? (
+              <iframe
+                src={(() => {
+                  const url = blog.videoUrl;
+                  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                  const match = url.match(regExp);
+                  if (match && match[2].length === 11) {
+                    return `https://www.youtube.com/embed/${match[2]}?rel=0`;
+                  }
+                  return url;
+                })()}
+                title={blog.title}
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            ) : (
+              <video
+                src={blog.videoUrl.startsWith('http') ? blog.videoUrl : `${API_URL}${blog.videoUrl}`}
+                controls
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+              />
+            )}
           </div>
+        ) : (
+          blog.featuredImage && (
+            <div style={{ width: '100%', height: 'auto', maxHeight: 400, borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: 30, boxShadow: 'var(--shadow-md)' }}>
+              <img 
+                src={blog.featuredImage.startsWith('http') ? blog.featuredImage : `${API_URL}${blog.featuredImage}`} 
+                alt={blog.title} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover', maxHeight: 400 }} 
+              />
+            </div>
+          )
         )}
         <div className="blog-body" dangerouslySetInnerHTML={{__html: blog.content}} style={{lineHeight:1.9,color:'var(--grey-dark)',fontSize:'1.05rem'}}/>
         {blog.tags?.length>0 && <div style={{marginTop:30,display:'flex',gap:8,flexWrap:'wrap'}}>{blog.tags.map(t=><span key={t} className="badge badge-blue">{t}</span>)}</div>}

@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const inquirySchema = new mongoose.Schema({
   name: { type: String, required: true },
   companyName: { type: String, default: '' },
+  companyGst: { type: String, default: '' },
   email: { type: String, required: true },
   phone: { type: String, default: '' },
   productInterested: { type: String, default: '' },

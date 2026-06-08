@@ -5,7 +5,7 @@ import api from '../../utils/api';
 import './InquiryModal.css';
 
 export default function InquiryModal({ isOpen, onClose, defaultProduct = '' }) {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', companyName: '', productInterested: defaultProduct, message: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', companyName: '', companyGst: '', productInterested: defaultProduct, message: '' });
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -16,7 +16,7 @@ export default function InquiryModal({ isOpen, onClose, defaultProduct = '' }) {
     try {
       await api.post('/inquiries', form);
       toast.success('Inquiry submitted successfully! We will contact you soon.');
-      setForm({ name: '', email: '', phone: '', companyName: '', productInterested: defaultProduct, message: '' });
+      setForm({ name: '', email: '', phone: '', companyName: '', companyGst: '', productInterested: defaultProduct, message: '' });
       onClose();
     } catch (err) {
       toast.error('Failed to submit inquiry. Please try again.');
@@ -47,13 +47,19 @@ export default function InquiryModal({ isOpen, onClose, defaultProduct = '' }) {
               <input type="tel" className="form-control" required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+91 XXXXX XXXXX" />
             </div>
           </div>
-          <div className="form-group">
-            <label>Company Name</label>
-            <input className="form-control" value={form.companyName} onChange={e => setForm({ ...form, companyName: e.target.value })} placeholder="Your Company" />
+          <div className="grid grid-2" style={{ gap: '16px' }}>
+            <div className="form-group">
+              <label>Company Name</label>
+              <input className="form-control" value={form.companyName} onChange={e => setForm({ ...form, companyName: e.target.value })} placeholder="Your Company" />
+            </div>
+            <div className="form-group">
+              <label>Company GST</label>
+              <input className="form-control" value={form.companyGst} onChange={e => setForm({ ...form, companyGst: e.target.value })} placeholder="GST Number (Optional)" />
+            </div>
           </div>
           <div className="form-group">
-            <label>Requirement / Message</label>
-            <textarea className="form-control" rows={3} value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} placeholder="Tell us about your requirements..."></textarea>
+            <label>Requirement / Message *</label>
+            <textarea className="form-control" rows={3} required value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} placeholder="SEND YOUR REQUIREMENT SIZES AND QUANTITY???"></textarea>
           </div>
           <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={loading}>
             <FaPaperPlane /> {loading ? 'Submitting...' : 'Submit Inquiry'}

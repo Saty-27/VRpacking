@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaBox, FaBlog, FaEnvelope, FaImage, FaCogs, FaEye } from 'react-icons/fa';
+import { FaBox, FaBlog, FaEnvelope, FaImage, FaVideo } from 'react-icons/fa';
 import api from '../../utils/api';
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState({ products: 0, blogs: 0, inquiries: 0, gallery: 0 });
+  const [stats, setStats] = useState({ products: 0, blogs: 0, inquiries: 0, gallery: 0, videoGallery: 0 });
   const [recentInquiries, setRecentInquiries] = useState([]);
 
   useEffect(() => {
@@ -12,9 +12,12 @@ export default function AdminDashboard() {
       api.get('/products/admin/all').then(r => r.data.length),
       api.get('/blogs/admin/all').then(r => r.data.length),
       api.get('/inquiries/admin').then(r => r.data),
-      api.get('/gallery/admin/all').then(r => r.data.length),
-    ]).then(([products, blogs, inquiries, gallery]) => {
-      setStats({ products, blogs, inquiries: inquiries.length, gallery });
+      api.get('/gallery/admin/all').then(r => r.data),
+    ]).then(([products, blogs, inquiries, galleryItems]) => {
+      const gallery = galleryItems.filter(item => item.mediaType !== 'video').length;
+      const videoGallery = galleryItems.filter(item => item.mediaType === 'video').length;
+
+      setStats({ products, blogs, inquiries: inquiries.length, gallery, videoGallery });
       setRecentInquiries(inquiries.slice(0, 5));
     }).catch(() => {});
   }, []);
@@ -23,13 +26,14 @@ export default function AdminDashboard() {
     { label: 'Products', count: stats.products, icon: <FaBox />, color: '#1a56db', link: '/admin/products' },
     { label: 'Blog Posts', count: stats.blogs, icon: <FaBlog />, color: '#f97316', link: '/admin/blogs' },
     { label: 'Inquiries', count: stats.inquiries, icon: <FaEnvelope />, color: '#10b981', link: '/admin/inquiries' },
-    { label: 'Gallery', count: stats.gallery, icon: <FaImage />, color: '#8b5cf6', link: '/admin/gallery' },
+    { label: 'Photo Gallery', count: stats.gallery, icon: <FaImage />, color: '#8b5cf6', link: '/admin/gallery' },
+    { label: 'Video Gallery', count: stats.videoGallery, icon: <FaVideo />, color: '#ec4899', link: '/admin/video-gallery' },
   ];
 
   return (
     <div>
       <h2 style={{ marginBottom: 30 }}>Dashboard</h2>
-      <div className="grid grid-4" style={{ marginBottom: 40 }}>
+      <div className="grid grid-5" style={{ marginBottom: 40 }}>
         {cards.map(c => (
           <Link key={c.label} to={c.link} className="card" style={{ textDecoration: 'none', borderLeft: `4px solid ${c.color}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

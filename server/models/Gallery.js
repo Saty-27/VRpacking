@@ -4,7 +4,10 @@ const slugify = require('slugify');
 const gallerySchema = new mongoose.Schema({
   title: { type: String, default: '' },
   slug: { type: String, unique: true },
-  image: { type: String, required: true },
+  image: { type: String, default: '' },
+  mediaType: { type: String, enum: ['image', 'video'], default: 'image' },
+  videoType: { type: String, enum: ['none', 'youtube', 'local'], default: 'none' },
+  videoUrl: { type: String, default: '' },
   category: { type: String, default: 'General' },
   caption: { type: String, default: '' },
   order: { type: Number, default: 0 },

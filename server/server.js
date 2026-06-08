@@ -60,32 +60,63 @@ app.use('/api/upload', uploadRoutes);
 app.get('/sitemap.xml', async (req, res) => {
   try {
     const baseUrl = 'https://www.vrpack.co.in';
-    const products = await Product.find({ isPublished: true }).select('slug updatedAt');
-    const blogs = await Blog.find({ isPublished: true }).select('slug updatedAt');
-    const services = await Service.find({ isPublished: true }).select('slug updatedAt');
-
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
-    const pages = ['', '/about-us', '/products', '/services', '/gallery', '/blog', '/contact-us', '/privacy-policy', '/terms-and-conditions'];
-    pages.forEach(p => {
-      xml += `  <url><loc>${baseUrl}${p}</loc><changefreq>weekly</changefreq><priority>${p === '' ? '1.0' : '0.8'}</priority></url>\n`;
+    // Static pages
+    const mainPages = [
+      { loc: '', priority: '1.0' },
+      { loc: '/about-us', priority: '0.8' },
+      { loc: '/contact-us', priority: '0.8' },
+      { loc: '/products', priority: '0.8' },
+      { loc: '/services', priority: '0.8' },
+      { loc: '/blog', priority: '0.8' },
+      { loc: '/sitemap', priority: '0.6' }
+    ];
+    mainPages.forEach(p => {
+      xml += `  <url>\n    <loc>${baseUrl}${p.loc}</loc>\n    <lastmod>2026-06-08</lastmod>\n    <priority>${p.priority}</priority>\n  </url>\n`;
     });
-    products.forEach(p => {
-      xml += `  <url><loc>${baseUrl}/products/${p.slug}</loc><lastmod>${p.updatedAt.toISOString()}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>\n`;
-    });
-    blogs.forEach(b => {
-      xml += `  <url><loc>${baseUrl}/blog/${b.slug}</loc><lastmod>${b.updatedAt.toISOString()}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>\n`;
-    });
-    services.forEach(s => {
-      xml += `  <url><loc>${baseUrl}/services/${s.slug}</loc><lastmod>${s.updatedAt.toISOString()}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>\n`;
-    });
-    xml += '</urlset>';
 
+    // Priority SEO Services
+    const seoServices = [
+      '/seaworthy-packing-in-vadodara',
+      '/vci-packaging-in-vadodara',
+      '/vci-packaging-manufacturer-in-vadodara',
+      '/export-packaging-in-vadodara',
+      '/industrial-packaging-solutions-in-vadodara',
+      '/aluminium-barrier-foil-packing-in-vadodara',
+      '/thermo-shrink-packing-in-vadodara',
+      '/odc-cargo-packing-in-vadodara',
+      '/desiccant-supplier-in-vadodara',
+      '/humidity-indicator-card-supplier-in-vadodara',
+      '/silpaulin-tarpaulin-cover-supplier-in-vadodara',
+      '/ld-hm-liner-manufacturer-in-vadodara',
+      '/packaging-consultancy-in-vadodara'
+    ];
+    seoServices.forEach(s => {
+      xml += `  <url>\n    <loc>${baseUrl}${s}</loc>\n    <lastmod>2026-06-08</lastmod>\n    <priority>0.9</priority>\n  </url>\n`;
+    });
+
+    // Dynamic Products
+    const products = await Product.find({ isPublished: { $ne: false } });
+    products.forEach(p => {
+      // Standard flat route
+      xml += `  <url>\n    <loc>${baseUrl}/${p.slug}</loc>\n    <lastmod>2026-06-08</lastmod>\n    <priority>0.7</priority>\n  </url>\n`;
+      // Localized SEO route
+      xml += `  <url>\n    <loc>${baseUrl}/${p.slug}-in-vadodara</loc>\n    <lastmod>2026-06-08</lastmod>\n    <priority>0.7</priority>\n  </url>\n`;
+    });
+
+    // Dynamic Blogs
+    const blogs = await Blog.find({ isPublished: { $ne: false } });
+    blogs.forEach(b => {
+      xml += `  <url>\n    <loc>${baseUrl}/blog/${b.slug}</loc>\n    <lastmod>2026-06-08</lastmod>\n    <priority>0.6</priority>\n  </url>\n`;
+    });
+
+    xml += '</urlset>';
     res.header('Content-Type', 'application/xml');
     res.send(xml);
   } catch (error) {
-    res.status(500).json({ message: 'Error generating sitemap' });
+    res.status(500).json({ message: 'Error generating sitemap', error: error.message });
   }
 });
 

@@ -13,9 +13,15 @@ export default function Header() {
   const [categories, setCategories] = useState([]);
   const location = useLocation();
 
+  const [activePages, setActivePages] = useState([]);
+
   useEffect(() => {
     api.get('/settings').then(r => setSettings(r.data)).catch(() => {});
     api.get('/categories').then(r => setCategories(r.data)).catch(() => {});
+    api.get('/pages').then(r => {
+      const activeSlugs = r.data.filter(p => p.isActive !== false).map(p => p.slug);
+      setActivePages(activeSlugs);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -32,9 +38,15 @@ export default function Header() {
     { label: 'Products', path: '/products', hasDropdown: true },
     { label: 'Services', path: '/services' },
     { label: 'Gallery', path: '/gallery' },
+    { label: 'Video Gallery', path: '/video-gallery' },
     { label: 'Blog', path: '/blog' },
     { label: 'Contact Us', path: '/contact-us' },
   ];
+
+  const visibleLinks = navLinks.filter(link => {
+    if (activePages.length === 0) return true;
+    return activePages.includes(link.path);
+  });
 
   const phone = settings?.phone || '+91 7384 11611';
   const whatsapp = settings?.whatsapp || '917383411611';
@@ -49,7 +61,7 @@ export default function Header() {
 
         <nav className={`header-nav ${menuOpen ? 'open' : ''}`}>
           <ul className="nav-list">
-            {navLinks.map(link => (
+            {visibleLinks.map(link => (
               <li key={link.path} className={`nav-item ${link.hasDropdown ? 'has-dropdown' : ''}`}>
                 {link.hasDropdown ? (
                   <>

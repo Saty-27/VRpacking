@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaClock, FaArrowRight, FaChevronDown, FaPaperPlane } from 'react-icons/fa';
 import { FaWhatsapp } from 'react-icons/fa';
 import { toast } from 'react-toastify';
@@ -7,27 +7,50 @@ import SEOHead from '../components/common/SEOHead';
 import api from '../utils/api';
 
 export default function Contact() {
-  const [form, setForm] = useState({ name: '', companyName: '', email: '', phone: '', productInterested: '', message: '' });
+  const [form, setForm] = useState({ name: '', companyName: '', companyGst: '', email: '', phone: '', productInterested: '', message: '' });
   const [submitting, setSubmitting] = useState(false);
   const [products, setProducts] = useState([]);
   const [faqs, setFaqs] = useState([]);
   const [openFaq, setOpenFaq] = useState(null);
   const [settings, setSettings] = useState({});
+  
+  const [pageActive, setPageActive] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/products?limit=50').then(r => setProducts(r.data.products || [])).catch(() => {});
-    api.get('/faqs/contact').then(r => setFaqs(r.data)).catch(() => {});
-    api.get('/settings').then(r => setSettings(r.data)).catch(() => {});
+    Promise.all([
+      api.get('/products?limit=50').then(r => setProducts(r.data.products || [])),
+      api.get('/faqs/contact').then(r => setFaqs(r.data)),
+      api.get('/settings').then(r => setSettings(r.data)),
+      api.get('/pages').then(r => {
+        const pg = r.data.find(p => p.slug === '/contact-us');
+        if (pg && pg.isActive === false) {
+          setPageActive(false);
+        }
+      })
+    ]).catch(() => {})
+      .finally(() => setPageLoading(false));
   }, []);
+
+  if (pageLoading) {
+    return <div className="loading" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
+  }
+
+  if (!pageActive) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.email) { toast.error('Name and email are required'); return; }
+    if (!form.name || !form.email || !form.phone || !form.message) { 
+      toast.error('Name, Email, Phone, and Message/Requirement are required'); 
+      return; 
+    }
     setSubmitting(true);
     try {
       await api.post('/inquiries', form);
       toast.success('Inquiry submitted successfully! We will contact you soon.');
-      setForm({ name: '', companyName: '', email: '', phone: '', productInterested: '', message: '' });
+      setForm({ name: '', companyName: '', companyGst: '', email: '', phone: '', productInterested: '', message: '' });
     } catch (err) { toast.error('Failed to submit. Please try again.'); }
     setSubmitting(false);
   };
@@ -62,20 +85,23 @@ export default function Contact() {
             <form onSubmit={handleSubmit}>
               <div className="grid grid-2">
                 <div className="form-group"><label>Name *</label><input className="form-control" required value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Your Name"/></div>
+                <div className="form-group"><label>Email *</label><input className="form-control" type="email" required value={form.email} onChange={e=>setForm({...form,email:e.target.value})} placeholder="email@example.com"/></div>
+              </div>
+              <div className="grid grid-2">
+                <div className="form-group"><label>Phone *</label><input className="form-control" required value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} placeholder="+91 XXXXX XXXXX"/></div>
                 <div className="form-group"><label>Company Name</label><input className="form-control" value={form.companyName} onChange={e=>setForm({...form,companyName:e.target.value})} placeholder="Company Name"/></div>
               </div>
               <div className="grid grid-2">
-                <div className="form-group"><label>Email *</label><input className="form-control" type="email" required value={form.email} onChange={e=>setForm({...form,email:e.target.value})} placeholder="email@example.com"/></div>
-                <div className="form-group"><label>Phone</label><input className="form-control" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} placeholder="+91 XXXXX XXXXX"/></div>
+                <div className="form-group"><label>Company GST</label><input className="form-control" value={form.companyGst} onChange={e=>setForm({...form,companyGst:e.target.value})} placeholder="GST Number (Optional)"/></div>
+                <div className="form-group"><label>Product Interested In</label>
+                  <select className="form-control" value={form.productInterested} onChange={e=>setForm({...form,productInterested:e.target.value})}>
+                    <option value="">Select Product</option>
+                    {products.map(p=><option key={p._id} value={p.name}>{p.name}</option>)}
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
               </div>
-              <div className="form-group"><label>Product Interested In</label>
-                <select className="form-control" value={form.productInterested} onChange={e=>setForm({...form,productInterested:e.target.value})}>
-                  <option value="">Select Product</option>
-                  {products.map(p=><option key={p._id} value={p.name}>{p.name}</option>)}
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div className="form-group"><label>Message</label><textarea className="form-control" value={form.message} onChange={e=>setForm({...form,message:e.target.value})} placeholder="Tell us about your packaging requirements..." rows={5}/></div>
+              <div className="form-group"><label>Message *</label><textarea className="form-control" required value={form.message} onChange={e=>setForm({...form,message:e.target.value})} placeholder="SEND YOUR REQUIREMENT SIZES AND QUANTITY???" rows={5}/></div>
               <button type="submit" className="btn btn-primary btn-lg" disabled={submitting}><FaPaperPlane/> {submitting ? 'Submitting...' : 'Submit Inquiry'}</button>
             </form>
           </div>

@@ -8,7 +8,7 @@ const scripts = ['seedAdmin.js', 'seedProducts.js', 'seedContent.js', 'seedSecti
 for (const script of scripts) {
   console.log(`📦 Running ${script}...`);
   try {
-    execSync(`node ${path.join(__dirname, script)}`, { stdio: 'inherit' });
+    execSync(`node "${path.join(__dirname, script)}"`, { stdio: 'inherit' });
   } catch (error) {
     console.error(`❌ Error in ${script}:`, error.message);
     process.exit(1);

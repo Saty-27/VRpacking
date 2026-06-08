@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { FaTachometerAlt, FaBox, FaBlog, FaImage, FaEnvelope, FaCog, FaSignOutAlt, FaBars, FaTimes, FaLayerGroup, FaQuestionCircle, FaStar, FaFileAlt } from 'react-icons/fa';
+import { FaTachometerAlt, FaBox, FaBlog, FaImage, FaEnvelope, FaCog, FaSignOutAlt, FaBars, FaTimes, FaLayerGroup, FaQuestionCircle, FaStar, FaFileAlt, FaVideo } from 'react-icons/fa';
 import { useState } from 'react';
 import './AdminLayout.css';
 
@@ -14,12 +14,14 @@ export default function AdminLayout() {
 
   const links = [
     { path: '/admin', icon: <FaTachometerAlt />, label: 'Dashboard' },
+    { path: '/admin/pages', icon: <FaFileAlt />, label: 'Manage Pages' },
     { path: '/admin/sections/home', icon: <FaLayerGroup />, label: 'Home Sections' },
     { path: '/admin/sections/about', icon: <FaLayerGroup />, label: 'About Sections' },
     { path: '/admin/sections/contact', icon: <FaLayerGroup />, label: 'Contact Sections' },
     { path: '/admin/products', icon: <FaBox />, label: 'Products' },
     { path: '/admin/blogs', icon: <FaBlog />, label: 'Blogs' },
     { path: '/admin/gallery', icon: <FaImage />, label: 'Gallery' },
+    { path: '/admin/video-gallery', icon: <FaVideo />, label: 'Video Gallery' },
     { path: '/admin/inquiries', icon: <FaEnvelope />, label: 'Inquiries' },
     { path: '/admin/settings', icon: <FaCog />, label: 'Settings' },
   ];

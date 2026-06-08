@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { FaTimes, FaIndustry, FaEye, FaArrowRight } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import SEOHead from '../components/common/SEOHead';
@@ -9,6 +9,9 @@ export default function Gallery() {
   const [images, setImages] = useState([]);
   const [activeCategory, setActiveCategory] = useState('All');
   const [lightbox, setLightbox] = useState(null);
+  
+  const [pageActive, setPageActive] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
 
   const categories = [
     'All',
@@ -22,9 +25,33 @@ export default function Gallery() {
   ];
 
   useEffect(() => {
-    const params = activeCategory !== 'All' ? { category: activeCategory } : {};
-    api.get('/gallery', { params }).then(r => setImages(r.data)).catch(() => {});
+    Promise.all([
+      api.get('/pages').then(r => {
+        const pg = r.data.find(p => p.slug === '/gallery');
+        if (pg && pg.isActive === false) {
+          setPageActive(false);
+        }
+      }),
+      (async () => {
+        const params = activeCategory !== 'All' ? { category: activeCategory } : {};
+        try {
+          const r = await api.get('/gallery', { params });
+          // Filter out videos from the photo gallery
+          const photoItems = (r.data || []).filter(item => item.mediaType !== 'video');
+          setImages(photoItems);
+        } catch {}
+      })()
+    ]).catch(() => {})
+      .finally(() => setPageLoading(false));
   }, [activeCategory]);
+
+  if (pageLoading) {
+    return <div className="loading" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
+  }
+
+  if (!pageActive) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <>

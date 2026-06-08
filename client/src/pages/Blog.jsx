@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { FaSearch, FaGlobe, FaArrowRight, FaCalendar, FaTag } from 'react-icons/fa';
+import { Link, useSearchParams, Navigate } from 'react-router-dom';
+import { FaSearch, FaGlobe, FaArrowRight, FaCalendar, FaTag, FaVideo } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import api, { API_URL } from '../utils/api';
 import SEOHead from '../components/common/SEOHead';
@@ -12,6 +12,9 @@ export default function Blog() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page')) || 1;
   const category = searchParams.get('category') || '';
+  
+  const [pageActive, setPageActive] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
 
   const categories = [
     'All',
@@ -27,11 +30,29 @@ export default function Blog() {
     const params = { page, limit: 9 };
     if (category) params.category = category;
     if (search) params.search = search;
-    api.get('/blogs', { params }).then(r => {
-      setBlogs(r.data.blogs || []);
-      setTotal(r.data.total || 0);
-    }).catch(() => {});
+    
+    Promise.all([
+      api.get('/pages').then(r => {
+        const pg = r.data.find(p => p.slug === '/blog');
+        if (pg && pg.isActive === false) {
+          setPageActive(false);
+        }
+      }),
+      api.get('/blogs', { params }).then(r => {
+        setBlogs(r.data.blogs || []);
+        setTotal(r.data.total || 0);
+      })
+    ]).catch(() => {})
+      .finally(() => setPageLoading(false));
   }, [page, category, search]);
+
+  if (pageLoading) {
+    return <div className="loading" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
+  }
+
+  if (!pageActive) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleCategory = (c) => {
     const p = new URLSearchParams();
@@ -99,11 +120,33 @@ export default function Blog() {
             {blogs.map(b => (
               <motion.div key={b._id} className="card blog-card"
                 variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                <div className="blog-image">
+                <div className="blog-image" style={{ position: 'relative' }}>
                   {b.featuredImage ? (
                     <img src={b.featuredImage.startsWith('http') ? b.featuredImage : `${API_URL}${b.featuredImage}`} alt={b.title} />
                   ) : (
-                    <FaGlobe size={28} color="var(--grey)" style={{ opacity: 0.4 }} />
+                    <div style={{ height: '100%', width: '100%', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <FaGlobe size={28} color="var(--grey)" style={{ opacity: 0.4 }} />
+                    </div>
+                  )}
+                  {b.videoType && b.videoType !== 'none' && (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 12,
+                      right: 12,
+                      background: 'rgba(230, 92, 0, 0.95)',
+                      color: 'white',
+                      padding: '4px 10px',
+                      borderRadius: 4,
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      boxShadow: 'var(--shadow-sm)',
+                      zIndex: 2
+                    }}>
+                      <FaVideo size={10} /> VIDEO
+                    </div>
                   )}
                 </div>
                 <div className="blog-content">

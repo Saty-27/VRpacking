@@ -7,8 +7,40 @@ import SEOHead from '../components/common/SEOHead';
 import InquiryModal from '../components/common/InquiryModal';
 import api, { API_URL } from '../utils/api';
 
-export default function ProductDetail() {
-  const { slug } = useParams();
+export default function ProductDetail({ seoSlug }) {
+  const { slug: routeSlug } = useParams();
+  let slug = seoSlug || routeSlug;
+
+  const slugMapping = {
+    'vci-film-roll-in-vadodara': 'vci-film-roll',
+    'vci-paper-supplier-in-vadodara': 'vci-paper-supplier',
+    'vci-bags-manufacturer-in-vadodara': 'vci-bags-manufacturer',
+    'vci-oil-supplier-in-vadodara': 'vci-oil-supplier',
+    'humidity-indicator-card-in-vadodara': 'humidity-indicator-card',
+    'desiccant-bags-in-vadodara': 'desiccant-bags',
+    'seaworthy-wooden-box-packing-in-vadodara': 'seaworthy-wooden-box-packing',
+    'aluminium-barrier-foil-rolls-in-vadodara': 'aluminium-barrier-foil-rolls',
+    'aluminium-foil-packing-for-preservation-in-vadodara': 'aluminium-foil-packing-for-preservation',
+    'heavy-duty-protective-cover-in-vadodara': 'heavy-duty-protective-cover',
+    'silpaulin-cover-in-vadodara': 'silpaulin-cover',
+    'tarpaulin-rolls-in-vadodara': 'tarpaulin-rolls',
+    'odc-cargo-packing-materials-in-vadodara': 'odc-cargo-packing-materials',
+    'thermo-shrink-packing-in-vadodara': 'thermo-shrink-packing',
+    'ldpe-shrink-film-in-vadodara': 'ldpe-shrink-film',
+    'hdpe-roll-supplier-in-vadodara': 'hdpe-roll-supplier',
+    'ld-hm-liners-in-vadodara': 'ld-hm-liners',
+    'disposable-aprons-in-vadodara': 'disposable-aprons',
+    'carry-bags-manufacturer-in-vadodara': 'carry-bags-manufacturer',
+    'pp-tubing-in-vadodara': 'pp-tubing',
+    'heavy-duty-liner-bags-in-vadodara': 'heavy-duty-liner-bags',
+    'perforation-embossing-bags-in-vadodara': 'perforation-embossing-bags',
+    'valve-type-ld-bags-in-vadodara': 'valve-type-ld-bags'
+  };
+
+  if (slugMapping[slug]) {
+    slug = slugMapping[slug];
+  }
+
   const [product, setProduct] = useState(null);
   const [faqs, setFaqs] = useState([]);
   const [openFaq, setOpenFaq] = useState(null);
@@ -173,7 +205,7 @@ export default function ProductDetail() {
 
       {product.benefits?.length>0 && <section className="section section-grey"><div className="container"><div className="section-header"><h2>Benefits</h2></div><div className="grid grid-2">{product.benefits.map((b,i)=><div key={i} style={{display:'flex',gap:10,alignItems:'center'}}><FaCheckCircle style={{color:'var(--orange)'}}/><span>{b}</span></div>)}</div></div></section>}
 
-      {product.relatedProducts?.length>0 && <section className="section"><div className="container"><div className="section-header"><h2>Related Products</h2></div><div className="grid grid-3">{product.relatedProducts.map(r=><div key={r._id} className="card product-card glass"><div className="product-image">{r.images && r.images[0] ? <img src={r.images[0]} alt={r.name} /> : <FaBoxOpen size={30} color="var(--blue)"/>}</div><div className="product-content"><h3>{r.name}</h3><Link to={`/products/${r.slug}`} className="btn btn-primary btn-sm">View Details</Link></div></div>)}</div></div></section>}
+      {product.relatedProducts?.length>0 && <section className="section"><div className="container"><div className="section-header"><h2>Related Products</h2></div><div className="grid grid-3">{product.relatedProducts.map(r=><div key={r._id} className="card product-card glass"><div className="product-image">{r.images && r.images[0] ? <img src={r.images[0]} alt={r.name} /> : <FaBoxOpen size={30} color="var(--blue)"/>}</div><div className="product-content"><h3>{r.name}</h3><Link to={`/${r.slug}`} className="btn btn-primary btn-sm">View Details</Link></div></div>)}</div></div></section>}
 
       {faqs.length>0 && <section className="section section-grey"><div className="container"><div className="section-header"><h2>Product FAQs</h2></div><div className="faq-list">{faqs.map((f,i)=><div key={f._id} className={`faq-item ${openFaq===i?'open':''}`}><button className="faq-question" onClick={()=>setOpenFaq(openFaq===i?null:i)}><span>{f.question}</span><FaChevronDown className="faq-arrow"/></button><div className="faq-answer"><p>{f.answer}</p></div></div>)}</div></div></section>}
 

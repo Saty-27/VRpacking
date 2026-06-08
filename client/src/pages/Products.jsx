@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, Navigate } from 'react-router-dom';
 import { FaSearch, FaBoxOpen, FaArrowRight, FaEnvelope } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import SEOHead from '../components/common/SEOHead';
@@ -14,8 +14,23 @@ export default function Products() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState('');
   const activeCategory = searchParams.get('category') || '';
+  
+  const [pageActive, setPageActive] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
 
-  useEffect(() => { api.get('/categories').then(r => setCategories(r.data)).catch(() => {}); }, []);
+  useEffect(() => {
+    Promise.all([
+      api.get('/categories').then(r => setCategories(r.data)),
+      api.get('/pages').then(r => {
+        const pg = r.data.find(p => p.slug === '/products');
+        if (pg && pg.isActive === false) {
+          setPageActive(false);
+        }
+      })
+    ]).catch(() => {})
+      .finally(() => setPageLoading(false));
+  }, []);
+
   useEffect(() => {
     const params = {};
     if (activeCategory) params.category = activeCategory;
@@ -28,6 +43,14 @@ export default function Products() {
     setSelectedProduct(productName);
     setModalOpen(true);
   };
+
+  if (pageLoading) {
+    return <div className="loading" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
+  }
+
+  if (!pageActive) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <>
@@ -68,7 +91,7 @@ export default function Products() {
                 <p>{p.shortDescription?.substring(0,120)}...</p>
                 {p.features?.length > 0 && <ul style={{marginBottom:12}}>{p.features.slice(0,3).map((f,i)=>(<li key={i} style={{fontSize:'0.85rem',color:'var(--grey)',display:'flex',gap:6,alignItems:'center',marginBottom:4}}>✓ {f}</li>))}</ul>}
                 <div className="product-actions">
-                  <Link to={`/products/${p.slug}`} className="btn btn-primary btn-sm">View Details <FaArrowRight/></Link>
+                  <Link to={`/${p.slug}`} className="btn btn-primary btn-sm">View Details <FaArrowRight/></Link>
                   <button onClick={() => handleInquiry(p.name)} className="btn btn-outline-dark btn-sm"><FaEnvelope /> Enquiry</button>
                 </div>
               </div>

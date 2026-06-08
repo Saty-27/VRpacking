@@ -13,10 +13,12 @@ const blogSchema = new mongoose.Schema({
   metaDescription: { type: String, default: '' },
   author: { type: String, default: 'VR Packaging Solutions' },
   isPublished: { type: Boolean, default: true },
+  videoType: { type: String, enum: ['none', 'youtube', 'local'], default: 'none' },
+  videoUrl: { type: String, default: '' },
 }, { timestamps: true });
 
 blogSchema.pre('save', function (next) {
-  if (this.isModified('title') || !this.slug) {
+  if (!this.slug) {
     this.slug = slugify(this.title, { lower: true, strict: true });
   }
   next();

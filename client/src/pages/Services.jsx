@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { FaShip, FaTruckLoading, FaClipboardCheck, FaGlobeAmericas, FaShieldAlt, FaCogs, FaWarehouse, FaTint, FaArrowRight, FaCheckCircle } from 'react-icons/fa';
 import SEOHead from '../components/common/SEOHead';
 import api, { API_URL } from '../utils/api';
@@ -8,11 +8,32 @@ const iconMap = { FaShip, FaTruckLoading, FaClipboardCheck, FaGlobeAmericas, FaS
 
 export default function Services() {
   const [services, setServices] = useState([]);
-  useEffect(() => { api.get('/services').then(r => setServices(r.data)).catch(() => {}); }, []);
+  const [pageActive, setPageActive] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      api.get('/services').then(r => setServices(r.data)),
+      api.get('/pages').then(r => {
+        const pg = r.data.find(p => p.slug === '/services');
+        if (pg && pg.isActive === false) {
+          setPageActive(false);
+        }
+      })
+    ]).catch(() => {})
+      .finally(() => setPageLoading(false));
+  }, []);
+
+  if (pageLoading) {
+    return <div className="loading" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
+  }
+
+  if (!pageActive) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <>
-
       <SEOHead title="Services - Seaworthy Packing, Export Packaging" description="Professional packaging services including seaworthy packing, ODC cargo packing, export packaging, and consultancy." />
       <section className="page-hero" style={{ backgroundImage: 'linear-gradient(135deg, rgba(17,24,39,0.92), rgba(17,24,39,0.92)), url("/services_banner.png")' }}><div className="container"><h1>Our Services</h1><p>Complete Industrial Packaging Solutions</p><div className="breadcrumb" style={{justifyContent:'center',color:'rgba(255,255,255,0.6)'}}><Link to="/" style={{color:'rgba(255,255,255,0.8)'}}>Home</Link> / <span style={{color:'var(--white)'}}>Services</span></div></div></section>
 

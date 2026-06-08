@@ -5,9 +5,9 @@ const { protect } = require('../middleware/auth');
 
 router.post('/', async (req, res) => {
   try {
-    const { name, email, phone, companyName, productInterested, message, file } = req.body;
+    const { name, email, phone, companyName, companyGst, productInterested, message, file } = req.body;
     if (!name || !email) return res.status(400).json({ message: 'Name and email are required' });
-    const inquiry = await Inquiry.create({ name, email, phone, companyName, productInterested, message, file });
+    const inquiry = await Inquiry.create({ name, email, phone, companyName, companyGst, productInterested, message, file });
     res.status(201).json({ message: 'Inquiry submitted successfully', inquiry });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -49,8 +49,8 @@ router.delete('/admin/:id', protect, async (req, res) => {
 router.get('/admin/export', protect, async (req, res) => {
   try {
     const inquiries = await Inquiry.find().sort({ createdAt: -1 });
-    const header = 'Name,Company,Email,Phone,Product,Message,Status,Date';
-    const rows = inquiries.map(i => `"${i.name}","${i.companyName}","${i.email}","${i.phone}","${i.productInterested}","${i.message}","${i.status}","${i.createdAt}"`);
+    const header = 'Name,Company,Company GST,Email,Phone,Product,Message,Status,Date';
+    const rows = inquiries.map(i => `"${i.name}","${i.companyName}","${i.companyGst || ''}","${i.email}","${i.phone}","${i.productInterested}","${i.message}","${i.status}","${i.createdAt}"`);
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=inquiries.csv');
     res.send([header, ...rows].join('\n'));

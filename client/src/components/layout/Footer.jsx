@@ -8,8 +8,14 @@ export default function Footer() {
   const [settings, setSettings] = useState(null);
   const [showTop, setShowTop] = useState(false);
 
+  const [activePages, setActivePages] = useState([]);
+
   useEffect(() => {
     api.get('/settings').then(r => setSettings(r.data)).catch(() => {});
+    api.get('/pages').then(r => {
+      const activeSlugs = r.data.filter(p => p.isActive !== false).map(p => p.slug);
+      setActivePages(activeSlugs);
+    }).catch(() => {});
     const onScroll = () => setShowTop(window.scrollY > 300);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
@@ -18,15 +24,31 @@ export default function Footer() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
   const s = settings || {};
 
+  const quickLinks = [
+    { label: 'Home', path: '/' },
+    { label: 'About Us', path: '/about-us' },
+    { label: 'Products', path: '/products' },
+    { label: 'Services', path: '/services' },
+    { label: 'Gallery', path: '/gallery' },
+    { label: 'Video Gallery', path: '/video-gallery' },
+    { label: 'Blog', path: '/blog' },
+    { label: 'Contact Us', path: '/contact-us' },
+  ];
+
+  const visibleQuickLinks = quickLinks.filter(link => {
+    if (activePages.length === 0) return true;
+    return activePages.includes(link.path);
+  });
+
   const productLinks = [
-    { label: 'VCI Film Roll', path: '/products/vci-film-roll' },
-    { label: 'Aluminium Barrier Foil Rolls', path: '/products/aluminium-barrier-foil-rolls' },
-    { label: 'Silpaulin Cover', path: '/products/silpaulin-cover' },
-    { label: 'Heavy Duty Liner Bags', path: '/products/heavy-duty-liner-bags' },
-    { label: 'Humidity Indicator', path: '/products/humidity-indicator' },
-    { label: 'Desiccants', path: '/products/desiccants' },
-    { label: 'LDPE Shrink Film', path: '/products/ldpe-shrink-film' },
-    { label: 'HDPE Roll', path: '/products/hdpe-roll' },
+    { label: 'VCI Film Roll', path: '/vci-film-roll' },
+    { label: 'Aluminium Barrier Foil Rolls', path: '/aluminium-barrier-foil-rolls' },
+    { label: 'Silpaulin Cover', path: '/silpaulin-cover' },
+    { label: 'Heavy Duty Liner Bags', path: '/heavy-duty-liner-bags' },
+    { label: 'Humidity Indicator', path: '/humidity-indicator-card' },
+    { label: 'Desiccants', path: '/desiccant-bags' },
+    { label: 'LDPE Shrink Film', path: '/ldpe-shrink-film' },
+    { label: 'HDPE Roll', path: '/hdpe-roll-supplier' },
   ];
 
   const serviceLinks = [
@@ -64,13 +86,9 @@ export default function Footer() {
               <div className="footer-col">
                 <h4>Quick Links</h4>
                 <ul>
-                  <li><Link to="/">Home</Link></li>
-                  <li><Link to="/about-us">About Us</Link></li>
-                  <li><Link to="/products">Products</Link></li>
-                  <li><Link to="/services">Services</Link></li>
-                  <li><Link to="/gallery">Gallery</Link></li>
-                  <li><Link to="/blog">Blog</Link></li>
-                  <li><Link to="/contact-us">Contact Us</Link></li>
+                  {visibleQuickLinks.map(link => (
+                    <li key={link.path}><Link to={link.path}>{link.label}</Link></li>
+                  ))}
                 </ul>
               </div>
 
