@@ -337,6 +337,22 @@ const pageData = {
   }
 };
 
+const seoPagePaths = {
+  'seaworthy-packing': 'seaworthy-packing-in-vadodara',
+  'vci-packaging': 'vci-packaging-in-vadodara',
+  'vci-packaging-manufacturer': 'vci-packaging-manufacturer-in-vadodara',
+  'export-packaging': 'export-packaging-in-vadodara',
+  'industrial-packaging': 'industrial-packaging-solutions-in-vadodara',
+  'aluminium-barrier-foil': 'aluminium-barrier-foil-packing-in-vadodara',
+  'thermo-shrink': 'thermo-shrink-packing-in-vadodara',
+  'odc-cargo-packing': 'odc-cargo-packing-in-vadodara',
+  'desiccants': 'desiccant-supplier-in-vadodara',
+  'humidity-indicator': 'humidity-indicator-card-supplier-in-vadodara',
+  'covers': 'silpaulin-tarpaulin-cover-supplier-in-vadodara',
+  'liners': 'ld-hm-liner-manufacturer-in-vadodara',
+  'consultancy': 'packaging-consultancy-in-vadodara',
+};
+
 export default function SeoPage({ pageKey }) {
   const data = pageData[pageKey];
   const [openFaq, setOpenFaq] = useState(null);
@@ -348,7 +364,8 @@ export default function SeoPage({ pageKey }) {
 
   if (!data) return <div className="page-hero"><div className="container"><h1>Page Not Found</h1></div></div>;
 
-  const currentUrl = `https://www.vrpack.co.in/${pageKey}-in-vadodara`;
+  const currentPath = seoPagePaths[pageKey] || `${pageKey}-in-vadodara`;
+  const currentUrl = `https://vrpack.co.in/${currentPath}`;
 
   // Structured Data Schema
   const jsonLdSchema = {

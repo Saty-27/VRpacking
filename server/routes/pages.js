@@ -2,10 +2,30 @@ const express = require('express');
 const router = express.Router();
 const Page = require('../models/Page');
 const { protect } = require('../middleware/auth');
+const defaultPages = require('../config/defaultPages');
+
+const defaultPageSlugs = defaultPages.map(page => page.slug);
+
+async function ensureDefaultPages() {
+  const existingCount = await Page.countDocuments({ slug: { $in: defaultPageSlugs } });
+  if (existingCount >= defaultPages.length) return;
+
+  await Page.bulkWrite(
+    defaultPages.map(page => ({
+      updateOne: {
+        filter: { slug: page.slug },
+        update: { $setOnInsert: page },
+        upsert: true,
+      },
+    })),
+    { ordered: false }
+  );
+}
 
 // GET /api/pages
 router.get('/', async (req, res) => {
   try {
+    await ensureDefaultPages();
     const pages = await Page.find().sort({ pageName: 1 });
     res.json(pages);
   } catch (error) {

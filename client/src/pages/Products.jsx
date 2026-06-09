@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import SEOHead from '../components/common/SEOHead';
 import InquiryModal from '../components/common/InquiryModal';
 import api, { API_URL } from '../utils/api';
+import { fallbackProducts } from '../utils/productFallbacks';
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -17,6 +18,8 @@ export default function Products() {
   
   const [pageActive, setPageActive] = useState(true);
   const [pageLoading, setPageLoading] = useState(true);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -32,11 +35,34 @@ export default function Products() {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
     const params = {};
     if (activeCategory) params.category = activeCategory;
     if (search) params.search = search;
     params.limit = 50;
-    api.get('/products', { params }).then(r => setProducts(r.data.products || [])).catch(() => {});
+    setProductsLoading(true);
+    setProductsError(false);
+
+    api.get('/products', { params })
+      .then(r => {
+        if (!Array.isArray(r.data?.products)) {
+          throw new Error('Invalid products response');
+        }
+        if (mounted) setProducts(r.data.products);
+      })
+      .catch(() => {
+        if (mounted) {
+          setProducts([]);
+          setProductsError(true);
+        }
+      })
+      .finally(() => {
+        if (mounted) setProductsLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, [activeCategory, search]);
 
   const handleInquiry = (productName) => {
@@ -44,13 +70,13 @@ export default function Products() {
     setModalOpen(true);
   };
 
-  if (pageLoading) {
-    return <div className="loading" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
-  }
-
-  if (!pageActive) {
+  if (!pageLoading && !pageActive) {
     return <Navigate to="/" replace />;
   }
+
+  const canUseFallbackProducts = productsError && !activeCategory && !search;
+  const visibleProducts = canUseFallbackProducts ? fallbackProducts : products;
+  const productSkeletons = Array.from({ length: 6 }, (_, index) => index);
 
   return (
     <>
@@ -80,15 +106,36 @@ export default function Products() {
             <input type="text" placeholder="Search products..." value={search} onChange={e=>setSearch(e.target.value)} className="form-control" style={{paddingLeft:36,width:250}}/>
           </div>
         </div>
+        {productsError && canUseFallbackProducts && (
+          <div className="product-list-notice">
+            Live product data is taking longer than expected, so core product links are shown for now.
+          </div>
+        )}
+
         <motion.div className="grid grid-3" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
-          {products.map((p, i) => (
+          {productsLoading ? productSkeletons.map(index => (
+            <motion.div key={`product-skeleton-${index}`} className="card product-card product-card-skeleton" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+              <div className="product-image skeleton" />
+              <div className="product-content">
+                <div className="skeleton skeleton-line skeleton-line-lg" />
+                <div className="skeleton skeleton-line" />
+                <div className="skeleton skeleton-line skeleton-line-sm" />
+                <div className="product-actions">
+                  <div className="skeleton skeleton-button" />
+                  <div className="skeleton skeleton-button" />
+                </div>
+              </div>
+            </motion.div>
+          )) : visibleProducts.map((p) => {
+            const description = p.shortDescription || 'Industrial packaging product for protective, export, and transit-safe packing requirements.';
+            return (
             <motion.div key={p._id} className="card product-card" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
               <div className="product-image">
                 {p.images && p.images[0] ? <img src={p.images[0].startsWith('http') ? p.images[0] : `${API_URL}${p.images[0]}`} alt={p.name} /> : <FaBoxOpen size={40} color="var(--blue)"/>}
               </div>
               <div className="product-content">
                 <h3>{p.name}</h3>
-                <p>{p.shortDescription?.substring(0,120)}...</p>
+                <p>{description.length > 120 ? `${description.substring(0, 120)}...` : description}</p>
                 {p.features?.length > 0 && <ul style={{marginBottom:12}}>{p.features.slice(0,3).map((f,i)=>(<li key={i} style={{fontSize:'0.85rem',color:'var(--grey)',display:'flex',gap:6,alignItems:'center',marginBottom:4}}>✓ {f}</li>))}</ul>}
                 <div className="product-actions">
                   <Link to={`/${p.slug}`} className="btn btn-primary btn-sm">View Details <FaArrowRight/></Link>
@@ -96,9 +143,20 @@ export default function Products() {
                 </div>
               </div>
             </motion.div>
-          ))}
+          )})}
         </motion.div>
-        {products.length===0 && <div className="loading"><p style={{color:'var(--grey)'}}>No products found</p></div>}
+        {!productsLoading && visibleProducts.length === 0 && (
+          <div className="product-empty-state">
+            <FaBoxOpen size={34} />
+            <h3>{productsError ? 'Products could not load right now' : 'No products found'}</h3>
+            <p>
+              {productsError
+                ? 'Please refresh once or send an enquiry and our team will share the suitable product details.'
+                : 'Try another category or search term.'}
+            </p>
+            {productsError && <button onClick={() => handleInquiry()} className="btn btn-primary">Send Enquiry</button>}
+          </div>
+        )}
       </div></section>
 
       <InquiryModal isOpen={modalOpen} onClose={() => setModalOpen(false)} defaultProduct={selectedProduct} />

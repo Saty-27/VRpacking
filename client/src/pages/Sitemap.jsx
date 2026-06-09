@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import SEOHead from '../components/common/SEOHead';
 
 export default function Sitemap() {
-  const currentUrl = 'https://www.vrpack.co.in/sitemap';
+  const currentUrl = 'https://vrpack.co.in/sitemap';
 
   return (
     <>

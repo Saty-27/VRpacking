@@ -6,6 +6,23 @@ import { motion } from 'framer-motion';
 import SEOHead from '../components/common/SEOHead';
 import InquiryModal from '../components/common/InquiryModal';
 import api, { API_URL } from '../utils/api';
+import { formatProductTitle, getFallbackProduct } from '../utils/productFallbacks';
+
+const parseProductSections = (longDescription = '') => {
+  const sections = [];
+  const regex = /<h2>(?:(\d+)\.\s*)?(.*?)<\/h2>([\s\S]*?)(?=(?:<h2>|$))/g;
+  let match;
+
+  while ((match = regex.exec(longDescription)) !== null) {
+    sections.push({
+      index: match[1] ? parseInt(match[1]) : sections.length + 1,
+      title: match[2].trim(),
+      content: match[3].trim()
+    });
+  }
+
+  return sections;
+};
 
 export default function ProductDetail({ seoSlug }) {
   const { slug: routeSlug } = useParams();
@@ -50,29 +67,72 @@ export default function ProductDetail({ seoSlug }) {
   const [parsedSections, setParsedSections] = useState([]);
 
   useEffect(() => {
+    let mounted = true;
     setLoading(true);
-    api.get(`/products/${slug}`).then(r => { 
-      setProduct(r.data); 
-      if (r.data && r.data.longDescription) {
-        const sections = [];
-        const regex = /<h2>(?:(\d+)\.\s*)?(.*?)<\/h2>([\s\S]*?)(?=(?:<h2>|$))/g;
-        let match;
-        while ((match = regex.exec(r.data.longDescription)) !== null) {
-          sections.push({
-            index: match[1] ? parseInt(match[1]) : sections.length + 1,
-            title: match[2].trim(),
-            content: match[3].trim()
-          });
-        }
-        setParsedSections(sections);
-        setActiveSection(1);
+    setProduct(null);
+    setParsedSections([]);
+
+    api.get(`/products/${slug}`).then(r => {
+      if (!mounted) return;
+      if (!r.data || typeof r.data !== 'object' || !r.data.name) {
+        throw new Error('Invalid product response');
       }
-      setLoading(false); 
-    }).catch(() => setLoading(false));
+      setProduct(r.data);
+      if (r.data && r.data.longDescription) {
+        setParsedSections(parseProductSections(r.data.longDescription));
+      }
+      setActiveSection(1);
+      setLoading(false);
+    }).catch(() => {
+      if (!mounted) return;
+      const fallbackProduct = getFallbackProduct(slug);
+      setProduct(fallbackProduct);
+      setParsedSections(parseProductSections(fallbackProduct?.longDescription));
+      setActiveSection(1);
+      setLoading(false);
+    });
     api.get('/faqs/products').then(r => setFaqs(r.data)).catch(() => {});
+
+    return () => {
+      mounted = false;
+    };
   }, [slug]);
 
-  if (loading) return <div className="loading" style={{minHeight:'60vh'}}><div className="spinner"/></div>;
+  if (loading) {
+    const title = formatProductTitle(slug);
+    return (
+      <>
+        <SEOHead title={`${title} | VR Packaging Solutions`} description={`Loading ${title} product details from VR Packaging Solutions.`} />
+        <section className="page-hero">
+          <div className="container">
+            <h1>{title}</h1>
+            <p>Loading product details...</p>
+            <div className="breadcrumb" style={{justifyContent:'center',color:'rgba(255,255,255,0.6)'}}>
+              <Link to="/" style={{color:'rgba(255,255,255,0.8)'}}>Home</Link> / <Link to="/products" style={{color:'rgba(255,255,255,0.8)'}}>Products</Link> / <span style={{color:'var(--white)'}}>{title}</span>
+            </div>
+          </div>
+        </section>
+        <section className="section">
+          <div className="container">
+            <div className="product-detail-grid">
+              <div className="product-detail-image-wrapper skeleton" />
+              <div className="product-detail-info-wrapper product-detail-loading-shell">
+                <div className="skeleton skeleton-pill" />
+                <div className="skeleton skeleton-line skeleton-title" />
+                <div className="skeleton skeleton-line" />
+                <div className="skeleton skeleton-line" />
+                <div className="skeleton skeleton-line skeleton-line-sm" />
+                <div className="product-detail-buttons">
+                  <div className="skeleton skeleton-button skeleton-button-lg" />
+                  <div className="skeleton skeleton-button skeleton-button-lg" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </>
+    );
+  }
   if (!product) return <div className="page-hero"><div className="container"><h1>Product Not Found</h1><Link to="/products" className="btn btn-primary" style={{marginTop:20}}>Back to Products</Link></div></div>;
 
   return (

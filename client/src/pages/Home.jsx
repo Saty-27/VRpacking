@@ -6,7 +6,8 @@ import {
   FaArrowRight, FaBox, FaCubes,
   FaBoxes, FaCar, FaMicrochip, FaWarehouse,
   FaWrench, FaTruck, FaPhone,
-  FaLayerGroup, FaThermometerHalf, FaTint, FaEnvelope
+  FaLayerGroup, FaThermometerHalf, FaTint, FaEnvelope,
+  FaPlay, FaMapMarkerAlt, FaGlobe
 } from 'react-icons/fa';
 import { FaWhatsapp } from 'react-icons/fa';
 import { FaShip, FaCogs } from 'react-icons/fa';
@@ -20,7 +21,11 @@ const staggerContainer = { hidden: { opacity: 0 }, visible: { opacity: 1, transi
 
 export default function Home() {
   const [products, setProducts] = useState([]);
+  const [services, setServices] = useState([]);
   const [gallery, setGallery] = useState([]);
+  const [videos, setVideos] = useState([]);
+  const [blogs, setBlogs] = useState([]);
+  const [settings, setSettings] = useState({});
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState('');
   
@@ -28,24 +33,65 @@ export default function Home() {
   const [loadingSections, setLoadingSections] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      api.get('/products?limit=8').then(r => setProducts(r.data?.products || [])),
-      api.get('/gallery').then(r => {
-        // Filter out videos from the homepage image gallery preview
-        const allItems = Array.isArray(r.data) ? r.data : [];
-        const photoItems = allItems.filter(item => item.mediaType !== 'video');
-        setGallery(photoItems.slice(0, 8));
-      }),
-      api.get('/sections/home').then(r => setSections(r.data))
-    ]).catch(() => {})
-      .finally(() => setLoadingSections(false));
+    let mounted = true;
+    const setIfMounted = (setter, value) => {
+      if (mounted) setter(value);
+    };
+
+    const requests = [
+      api.get('/products?limit=8')
+        .then(r => setIfMounted(setProducts, r.data?.products || []))
+        .catch(() => {}),
+      api.get('/services')
+        .then(r => setIfMounted(setServices, Array.isArray(r.data) ? r.data : []))
+        .catch(() => {}),
+      api.get('/gallery')
+        .then(r => {
+          const allItems = Array.isArray(r.data) ? r.data : [];
+          setIfMounted(setGallery, allItems.filter(item => item.mediaType !== 'video').slice(0, 8));
+          setIfMounted(setVideos, allItems.filter(item => item.mediaType === 'video').slice(0, 4));
+        })
+        .catch(() => {}),
+      api.get('/blogs?limit=3')
+        .then(r => setIfMounted(setBlogs, r.data?.blogs || []))
+        .catch(() => {}),
+      api.get('/settings')
+        .then(r => setIfMounted(setSettings, r.data || {}))
+        .catch(() => {}),
+      api.get('/sections/home')
+        .then(r => setIfMounted(setSections, Array.isArray(r.data) ? r.data : []))
+        .catch(() => {})
+    ];
+
+    Promise.allSettled(requests).finally(() => {
+      if (mounted) setLoadingSections(false);
+    });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const getSection = (key) => sections.find(s => s.sectionKey === key) || {};
+  const cmsManagedHomeSections = new Set([
+    'hero',
+    'about-preview',
+    'specialization',
+    'why-choose-us',
+    'product-categories',
+    'industries',
+    'process',
+    'gallery-preview',
+    'blog-preview',
+    'final-cta',
+  ]);
   const hasSection = (key) => {
-    if (loadingSections) return true;
+    if (loadingSections || sections.length === 0 || !cmsManagedHomeSections.has(key)) return true;
     return sections.some(s => s.sectionKey === key);
   };
+  const blocksOrFallback = (section, fallback) => (
+    Array.isArray(section.contentBlocks) && section.contentBlocks.length > 0 ? section.contentBlocks : fallback
+  );
 
   const handleInquiry = (productName = '') => {
     setSelectedProduct(productName);
@@ -54,13 +100,49 @@ export default function Home() {
 
   const schema = {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    name: "VR Packaging Solutions",
-    description: "Manufacturer of VCI & Seaworthy Packaging Solutions",
-    address: { "@type": "PostalAddress", streetAddress: "253/19-A, GIDC Industrial Estate, Makarpura", addressLocality: "Vadodara", addressRegion: "Gujarat", postalCode: "390010", addressCountry: "IN" },
-    telephone: "+917383411611",
-    email: "vijay@vrpack.co.in",
-    url: "https://www.vrpack.co.in"
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://vrpack.co.in/#organization",
+        name: "VR Packaging Solutions",
+        url: "https://vrpack.co.in/",
+        logo: "https://vrpack.co.in/logo-512x512.png",
+        contactPoint: {
+          "@type": "ContactPoint",
+          telephone: "+917383411611",
+          contactType: "sales",
+          areaServed: "IN",
+          availableLanguage: ["en", "hi", "gu"]
+        }
+      },
+      {
+        "@type": "LocalBusiness",
+        "@id": "https://vrpack.co.in/#localbusiness",
+        name: "VR Packaging Solutions",
+        image: "https://vrpack.co.in/logo-512x512.png",
+        logo: "https://vrpack.co.in/logo-512x512.png",
+        description: "Manufacturer of VCI, seaworthy, shrink wrapping, industrial, and export packaging solutions in Vadodara, Gujarat.",
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "253/19-A, Opp. Columbia Machine Pvt Ltd, GIDC Industrial Estate, Makarpura",
+          addressLocality: "Vadodara",
+          addressRegion: "Gujarat",
+          postalCode: "390010",
+          addressCountry: "IN"
+        },
+        telephone: "+917383411611",
+        email: "vijay@vrpack.co.in",
+        url: "https://vrpack.co.in/",
+        priceRange: "$$"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://vrpack.co.in/#website",
+        name: "VR Packaging Solutions",
+        url: "https://vrpack.co.in/",
+        publisher: { "@id": "https://vrpack.co.in/#organization" }
+      }
+    ]
   };
 
   const specializations = [
@@ -99,22 +181,64 @@ export default function Home() {
     { num: 4, title: 'Packing / Supply Support', desc: 'We complete the packing or supply the materials as per the agreed specification.' },
   ];
 
+  const fallbackProducts = [
+    { _id: 'fallback-vci-film', name: 'VCI Film Roll', slug: 'vci-film-roll', category: { name: 'VCI Products' } },
+    { _id: 'fallback-barrier-foil', name: 'Aluminium Barrier Foil Rolls', slug: 'aluminium-barrier-foil-rolls', category: { name: 'Barrier Foil' } },
+    { _id: 'fallback-silpaulin', name: 'Silpaulin Cover', slug: 'silpaulin-cover', category: { name: 'Protective Covers' } },
+    { _id: 'fallback-liner-bags', name: 'Heavy Duty Liner Bags', slug: 'heavy-duty-liner-bags', category: { name: 'Industrial Bags' } },
+    { _id: 'fallback-humidity', name: 'Humidity Indicator', slug: 'humidity-indicator-card', category: { name: 'Moisture Control' } },
+    { _id: 'fallback-desiccants', name: 'Desiccants', slug: 'desiccant-bags', category: { name: 'Moisture Control' } },
+    { _id: 'fallback-shrink', name: 'LDPE Shrink Film', slug: 'ldpe-shrink-film', category: { name: 'Shrink Packing' } },
+    { _id: 'fallback-hdpe', name: 'HDPE Roll', slug: 'hdpe-roll-supplier', category: { name: 'Industrial Rolls' } },
+  ];
+
+  const fallbackServices = [
+    { _id: 'fallback-seaworthy', name: 'Seaworthy Packing', shortDescription: 'Export-ready packing for machinery, equipment, and industrial cargo.', icon: <FaShip /> },
+    { _id: 'fallback-shrink-wrapping', name: 'Shrink Wrapping', shortDescription: 'Dust, moisture, and transit protection with LDPE and thermo shrink films.', icon: <FaThermometerHalf /> },
+    { _id: 'fallback-vci-packaging', name: 'VCI Packaging', shortDescription: 'Corrosion protection for metal components during storage and shipping.', icon: <FaShieldAlt /> },
+    { _id: 'fallback-odc', name: 'ODC & Cargo Project Packing', shortDescription: 'Packing support for heavy, large, and over-dimensional industrial cargo.', icon: <FaTruck /> },
+    { _id: 'fallback-consultancy', name: 'Packing Consultancy', shortDescription: 'Practical guidance for custom packaging material selection and packing method.', icon: <FaWrench /> },
+    { _id: 'fallback-barrier', name: 'Barrier Foil Packing', shortDescription: 'Moisture barrier preservation using aluminium barrier foil and desiccants.', icon: <FaLayerGroup /> },
+  ];
+
+  const fallbackVideos = [
+    { _id: 'fallback-video-1', title: 'VCI Packaging Process', category: 'VCI Products' },
+    { _id: 'fallback-video-2', title: 'Seaworthy Packing Work', category: 'Seaworthy Packing' },
+    { _id: 'fallback-video-3', title: 'Shrink Wrapping Application', category: 'Shrink Packing' },
+    { _id: 'fallback-video-4', title: 'Industrial Packing Projects', category: 'Industrial Packaging' },
+  ];
+
+  const fallbackBlogs = [
+    { _id: 'fallback-blog-1', title: 'How VCI Packaging Helps Prevent Rust', slug: 'vci-packaging-for-rust-prevention', category: 'VCI Packaging', excerpt: 'A practical guide to corrosion protection for metal products during storage and export movement.' },
+    { _id: 'fallback-blog-2', title: 'Seaworthy Packing for Export Cargo', slug: 'seaworthy-packing-in-vadodara-complete-guide', category: 'Seaworthy Packing', excerpt: 'Key points manufacturers should consider before shipping machinery and industrial cargo overseas.' },
+    { _id: 'fallback-blog-3', title: 'Moisture Control in Industrial Packaging', slug: 'why-desiccants-and-humidity-indicators-are-important', category: 'Moisture Protection', excerpt: 'Why desiccants, humidity indicators, and barrier materials matter for long-distance transit safety.' },
+  ];
+
   const hero = getSection('hero');
   const aboutPreview = getSection('about-preview');
   const specializationSec = getSection('specialization');
   const whyChooseUsSec = getSection('why-choose-us');
   const productCategoriesSec = getSection('product-categories');
+  const servicesPreviewSec = getSection('services-preview');
   const industriesSec = getSection('industries');
   const processSec = getSection('process');
   const galleryPreviewSec = getSection('gallery-preview');
+  const videoGalleryPreviewSec = getSection('video-gallery-preview');
+  const blogPreviewSec = getSection('blog-preview');
+  const contactPreviewSec = getSection('contact-preview');
   const finalCtaSec = getSection('final-cta');
+  const featuredProducts = products.length > 0 ? products.slice(0, 8) : fallbackProducts;
+  const featuredServices = services.length > 0 ? services.slice(0, 6) : fallbackServices;
+  const featuredVideos = videos.length > 0 ? videos.slice(0, 4) : fallbackVideos;
+  const featuredBlogs = blogs.length > 0 ? blogs.slice(0, 3) : fallbackBlogs;
 
   return (
     <div style={{ background: 'var(--white)', color: 'var(--navy)' }}>
       <SEOHead
-        title="VCI & Seaworthy Packaging Solutions | VR Packaging Solutions"
-        description="VR Packaging Solutions — Manufacturer of VCI products, seaworthy packaging, shrink films, barrier foil rolls, silpaulin covers, desiccants, and industrial packaging in Vadodara, Gujarat."
+        title="VR Packaging Solutions | VCI & Seaworthy Packaging Manufacturer in Vadodara"
+        description="VR Packaging Solutions provides industrial packaging materials and custom-made packaging solutions for corrosion protection, moisture control, seaworthy packing, VCI packaging, shrink wrapping, and export packaging in Vadodara, Gujarat."
         keywords="VCI packaging Vadodara, seaworthy packing Gujarat, export packaging, industrial packaging, barrier foil, silpaulin cover, humidity indicator"
+        canonical="https://vrpack.co.in/"
         schema={schema}
       />
 
@@ -212,7 +336,7 @@ export default function Home() {
               <div style={{ width: 60, height: 4, background: 'var(--orange)', margin: '16px auto 0', borderRadius: 2 }} />
             </div>
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="grid grid-4" style={{ gap: 20 }}>
-              {(specializationSec.contentBlocks || specializations).map((item, i) => (
+              {blocksOrFallback(specializationSec, specializations).map((item, i) => (
                 <motion.div key={i} variants={fadeInUp}
                   style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 'var(--radius-lg)', padding: '28px 22px', transition: 'all 0.3s', cursor: 'default' }}
                   onMouseOver={e => { e.currentTarget.style.background = 'rgba(230,92,0,0.12)'; e.currentTarget.style.borderColor = 'rgba(230,92,0,0.4)'; }}
@@ -239,7 +363,7 @@ export default function Home() {
               <Link to="/products" className="btn btn-outline-dark" style={{ flexShrink: 0 }}>View All Products</Link>
             </div>
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-50px' }} variants={staggerContainer} className="grid grid-4" style={{ gap: 20 }}>
-              {products.slice(0, 8).map((p) => (
+              {featuredProducts.map((p) => (
                 <motion.div key={p._id} variants={fadeInUp} className="card product-card"
                   style={{ background: 'var(--white)', boxShadow: 'var(--shadow-card)', transition: 'var(--transition)' }}
                   onMouseOver={e => e.currentTarget.style.transform = 'translateY(-5px)'}
@@ -269,7 +393,37 @@ export default function Home() {
         </section>
       )}
 
-      {/* ── 5. WHY CHOOSE US ── */}
+      {/* ── 5. SERVICES ── */}
+      {hasSection('services-preview') && (
+        <section className="section">
+          <div className="container">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40, gap: 20, flexWrap: 'wrap' }}>
+              <div>
+                <span style={{ color: 'var(--orange)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, fontSize: '0.85rem' }}>What We Do</span>
+                <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', marginTop: 10 }}>{servicesPreviewSec.title || 'Packaging Services'}</h2>
+                <p style={{ color: 'var(--grey)', marginTop: 10, maxWidth: 620 }}>{servicesPreviewSec.subtitle || 'VCI, seaworthy, shrink wrapping, and export packaging support for industrial goods.'}</p>
+              </div>
+              <Link to="/services" className="btn btn-outline-dark" style={{ flexShrink: 0 }}>View All Services</Link>
+            </div>
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="grid grid-3" style={{ gap: 24 }}>
+              {featuredServices.map((service, i) => (
+                <motion.div key={service._id || service.name} variants={fadeInUp} className="card">
+                  <div className="card-icon" style={{ color: 'var(--orange)' }}>
+                    {fallbackServices[i]?.icon || <FaCogs />}
+                  </div>
+                  <h4 style={{ marginBottom: 10 }}>{service.name}</h4>
+                  <p style={{ color: 'var(--grey)', fontSize: '0.92rem', lineHeight: 1.7, marginBottom: 18 }}>
+                    {service.shortDescription || 'Custom packaging support for safe handling, storage, and transport.'}
+                  </p>
+                  <Link to="/services" className="blog-link">Learn More <FaArrowRight style={{ fontSize: '0.8rem' }} /></Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+      )}
+
+      {/* ── 6. WHY CHOOSE US ── */}
       {hasSection('why-choose-us') && (
         <section className="section">
           <div className="container">
@@ -279,7 +433,7 @@ export default function Home() {
               <div style={{ width: 60, height: 4, background: 'var(--orange)', margin: '16px auto 0', borderRadius: 2 }} />
             </div>
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="grid grid-3" style={{ gap: 24 }}>
-              {(whyChooseUsSec.contentBlocks || whyUs).map((item, i) => (
+              {blocksOrFallback(whyChooseUsSec, whyUs).map((item, i) => (
                 <motion.div key={i} variants={fadeInUp}
                   style={{ background: 'var(--white)', borderRadius: 'var(--radius-lg)', padding: '30px 26px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: 'var(--shadow-card)', transition: 'var(--transition)' }}
                   onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--orange)'; e.currentTarget.style.transform = 'translateY(-5px)'; }}
@@ -307,7 +461,7 @@ export default function Home() {
               <div style={{ width: 60, height: 4, background: 'var(--orange)', margin: '16px auto 0', borderRadius: 2 }} />
             </div>
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="grid grid-4" style={{ gap: 20 }}>
-              {(industriesSec.contentBlocks || industries).map((ind, i) => (
+              {blocksOrFallback(industriesSec, industries).map((ind, i) => (
                 <motion.div key={i} variants={fadeInUp}
                   style={{ background: 'var(--white)', border: '1px solid rgba(0,0,0,0.06)', padding: '28px 20px', borderRadius: 'var(--radius-lg)', textAlign: 'center', transition: 'all 0.3s', cursor: 'default' }}
                   onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--orange)'; e.currentTarget.style.transform = 'translateY(-4px)'; }}
@@ -331,7 +485,7 @@ export default function Home() {
               <div style={{ width: 60, height: 4, background: 'var(--orange)', margin: '16px auto 0', borderRadius: 2 }} />
             </div>
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="grid grid-4" style={{ gap: 20 }}>
-              {(processSec.contentBlocks || steps).map((step, i) => (
+              {blocksOrFallback(processSec, steps).map((step, i) => (
                 <motion.div key={i} variants={fadeInUp}
                   style={{ position: 'relative', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', padding: '36px 24px 28px', borderRadius: 'var(--radius-lg)' }}>
                   <div style={{ position: 'absolute', top: -18, left: 24, width: 36, height: 36, background: 'var(--orange)', color: 'var(--white)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1rem' }}>
@@ -382,7 +536,119 @@ export default function Home() {
         </section>
       )}
 
-      {/* ── 9. INQUIRY CTA ── */}
+      {/* ── 9. VIDEO GALLERY PREVIEW ── */}
+      {hasSection('video-gallery-preview') && (
+        <section className="section" style={{ background: 'var(--grey-light)' }}>
+          <div className="container">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40, gap: 20, flexWrap: 'wrap' }}>
+              <div>
+                <span style={{ color: 'var(--orange)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, fontSize: '0.85rem' }}>In Action</span>
+                <h2 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', marginTop: 10 }}>{videoGalleryPreviewSec.title || 'Video Gallery'}</h2>
+                <p style={{ color: 'var(--grey)', marginTop: 10, maxWidth: 620 }}>{videoGalleryPreviewSec.subtitle || 'See packaging, preservation, and industrial protection work in action.'}</p>
+              </div>
+              <Link to="/video-gallery" className="btn btn-outline-dark" style={{ flexShrink: 0 }}>View Videos</Link>
+            </div>
+            <div className="gallery-grid">
+              {featuredVideos.map((video) => (
+                <Link key={video._id || video.title} to={video.slug ? `/video-gallery/${video.slug}` : '/video-gallery'} className="gallery-thumb" style={{ display: 'block', position: 'relative' }}>
+                  {video.image ? (
+                    <img
+                      src={video.image.startsWith('http') ? video.image : `${API_URL}${video.image}`}
+                      alt={video.title || video.category || 'Packaging video'}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div className="gallery-placeholder">
+                      <FaPlay size={34} style={{ color: 'var(--orange-light)' }} />
+                      <span>{video.category || 'Packaging Video'}</span>
+                    </div>
+                  )}
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(17,24,39,0.78), rgba(17,24,39,0.08))', display: 'flex', alignItems: 'flex-end', padding: 18 }}>
+                    <div>
+                      <span className="badge badge-orange" style={{ marginBottom: 8 }}>{video.category || 'Video'}</span>
+                      <h4 style={{ color: 'var(--white)', fontSize: '1rem', lineHeight: 1.35 }}>{video.title || 'Packaging Project Video'}</h4>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── 10. BLOG PREVIEW ── */}
+      {hasSection('blog-preview') && (
+        <section className="section">
+          <div className="container">
+            <div className="section-header">
+              <h2>{blogPreviewSec.title || 'Latest From Our Blog'}</h2>
+              <p className="subtitle">{blogPreviewSec.subtitle || 'Packaging insights for corrosion protection, moisture control, and export transit safety.'}</p>
+            </div>
+            <div className="grid grid-3" style={{ gap: 24 }}>
+              {featuredBlogs.map((blog) => (
+                <div key={blog._id || blog.slug} className="card blog-card">
+                  <div className="blog-image">
+                    {blog.featuredImage ? (
+                      <img src={blog.featuredImage.startsWith('http') ? blog.featuredImage : `${API_URL}${blog.featuredImage}`} alt={blog.title} />
+                    ) : (
+                      <FaGlobe size={34} color="var(--grey)" opacity={0.35} />
+                    )}
+                  </div>
+                  <div className="blog-content">
+                    <span className="badge badge-orange">{blog.category || 'Industrial Packaging'}</span>
+                    <h4>{blog.title}</h4>
+                    <p>{blog.excerpt || 'Read practical packaging guidance from VR Packaging Solutions.'}</p>
+                    <Link to={blog.slug ? `/blog/${blog.slug}` : '/blog'} className="blog-link">
+                      Read More <FaArrowRight style={{ fontSize: '0.8rem' }} />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 36 }}>
+              <Link to="/blog" className="btn btn-outline-dark">{blogPreviewSec.buttons?.[0]?.text || 'View More Blogs'}</Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── 11. CONTACT PREVIEW ── */}
+      {hasSection('contact-preview') && (
+        <section className="section" style={{ background: 'var(--grey-light)' }}>
+          <div className="container">
+            <div className="grid grid-2" style={{ gap: 50, alignItems: 'center' }}>
+              <div>
+                <span style={{ color: 'var(--orange)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, fontSize: '0.85rem' }}>Contact Us</span>
+                <h2 style={{ marginTop: 10, marginBottom: 16 }}>{contactPreviewSec.title || 'Discuss Your Packaging Requirement'}</h2>
+                <p style={{ color: 'var(--grey)', lineHeight: 1.8, marginBottom: 28 }}>
+                  {contactPreviewSec.description || 'Share your product size, quantity, storage condition, and shipment requirement. Our team will suggest suitable packaging materials or a custom packing solution.'}
+                </p>
+                <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                  <button onClick={() => handleInquiry()} className="btn btn-primary">Send Enquiry <FaArrowRight /></button>
+                  <Link to="/contact-us" className="btn btn-outline-dark">Contact Details</Link>
+                </div>
+              </div>
+              <div className="grid grid-1" style={{ gap: 16 }}>
+                {[
+                  { icon: <FaMapMarkerAlt />, title: 'Address', value: settings.address || '253/19-A, Opp. Columbia Machine Pvt Ltd, GIDC Industrial Estate, Makarpura, Vadodara - 390010, Gujarat' },
+                  { icon: <FaPhone />, title: 'Phone', value: settings.phone || '+91 7384 11611', link: `tel:${(settings.phone || '+917383411611').replace(/\s/g, '')}` },
+                  { icon: <FaEnvelope />, title: 'Email', value: settings.email || 'vijay@vrpack.co.in', link: `mailto:${settings.email || 'vijay@vrpack.co.in'}` },
+                ].map((item) => (
+                  <div key={item.title} className="card" style={{ display: 'flex', alignItems: 'center', gap: 18, padding: 22 }}>
+                    <div className="card-icon" style={{ marginBottom: 0, color: 'var(--orange)', flexShrink: 0 }}>{item.icon}</div>
+                    <div>
+                      <h4 style={{ fontSize: '1rem', marginBottom: 4 }}>{item.title}</h4>
+                      {item.link ? <a href={item.link} style={{ color: 'var(--blue)', fontWeight: 600 }}>{item.value}</a> : <p style={{ color: 'var(--grey)', margin: 0, lineHeight: 1.6 }}>{item.value}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── 12. INQUIRY CTA ── */}
       {hasSection('final-cta') && (
         <section style={{ background: 'linear-gradient(135deg, #111827 0%, #1f2937 100%)', padding: '80px 0' }}>
           <div className="container" style={{ textAlign: 'center' }}>

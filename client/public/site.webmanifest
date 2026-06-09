@@ -1,0 +1,22 @@
+{
+  "name": "VR Packaging Solutions",
+  "short_name": "VR Packaging",
+  "description": "VCI, seaworthy, shrink wrapping, and export packaging manufacturer in Vadodara, Gujarat.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

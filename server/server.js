@@ -59,7 +59,7 @@ app.use('/api/upload', uploadRoutes);
 // Sitemap.xml
 app.get('/sitemap.xml', async (req, res) => {
   try {
-    const baseUrl = 'https://www.vrpack.co.in';
+    const baseUrl = 'https://vrpack.co.in';
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
@@ -70,6 +70,8 @@ app.get('/sitemap.xml', async (req, res) => {
       { loc: '/contact-us', priority: '0.8' },
       { loc: '/products', priority: '0.8' },
       { loc: '/services', priority: '0.8' },
+      { loc: '/gallery', priority: '0.8' },
+      { loc: '/video-gallery', priority: '0.8' },
       { loc: '/blog', priority: '0.8' },
       { loc: '/sitemap', priority: '0.6' }
     ];
@@ -123,7 +125,7 @@ app.get('/sitemap.xml', async (req, res) => {
 // Robots.txt
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
-  res.send('User-agent: *\nAllow: /\nSitemap: https://www.vrpack.co.in/sitemap.xml');
+  res.send('User-agent: *\nAllow: /\nSitemap: https://vrpack.co.in/sitemap.xml');
 });
 
 // Health check
