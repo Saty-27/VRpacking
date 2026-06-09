@@ -15,6 +15,7 @@ export default function Products() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState('');
   const activeCategory = searchParams.get('category') || '';
+  const activeSearch = searchParams.get('search') || '';
   
   const [pageActive, setPageActive] = useState(true);
   const [pageLoading, setPageLoading] = useState(true);
@@ -33,6 +34,10 @@ export default function Products() {
     ]).catch(() => {})
       .finally(() => setPageLoading(false));
   }, []);
+
+  useEffect(() => {
+    setSearch(activeSearch);
+  }, [activeSearch]);
 
   useEffect(() => {
     let mounted = true;
@@ -70,6 +75,16 @@ export default function Products() {
     setModalOpen(true);
   };
 
+  const handleSearchChange = (event) => {
+    const value = event.target.value;
+    setSearch(value);
+
+    const nextParams = new URLSearchParams(searchParams);
+    if (value.trim()) nextParams.set('search', value);
+    else nextParams.delete('search');
+    setSearchParams(nextParams, { replace: true });
+  };
+
   if (!pageLoading && !pageActive) {
     return <Navigate to="/" replace />;
   }
@@ -103,7 +118,7 @@ export default function Products() {
           </div>
           <div style={{position:'relative'}}>
             <FaSearch style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--grey)'}}/>
-            <input type="text" placeholder="Search products..." value={search} onChange={e=>setSearch(e.target.value)} className="form-control" style={{paddingLeft:36,width:250}}/>
+            <input type="text" placeholder="Search products..." value={search} onChange={handleSearchChange} className="form-control" style={{paddingLeft:36,width:250}}/>
           </div>
         </div>
         {productsError && canUseFallbackProducts && (
@@ -131,7 +146,7 @@ export default function Products() {
             return (
             <motion.div key={p._id} className="card product-card" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
               <div className="product-image">
-                {p.images && p.images[0] ? <img src={p.images[0].startsWith('http') ? p.images[0] : `${API_URL}${p.images[0]}`} alt={p.name} /> : <FaBoxOpen size={40} color="var(--blue)"/>}
+                {p.images && p.images[0] ? <img src={p.images[0].startsWith('http') ? p.images[0] : `${API_URL}${p.images[0]}`} alt={p.name} loading="lazy" decoding="async" /> : <FaBoxOpen size={40} color="var(--blue)"/>}
               </div>
               <div className="product-content">
                 <h3>{p.name}</h3>

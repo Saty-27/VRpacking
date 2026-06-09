@@ -29,4 +29,8 @@ productSchema.pre('save', function (next) {
   next();
 });
 
+productSchema.index({ isPublished: 1, category: 1, createdAt: -1 });
+productSchema.index({ isPublished: 1, createdAt: -1 });
+productSchema.index({ name: 'text', shortDescription: 'text', keywords: 'text' });
+
 module.exports = mongoose.model('Product', productSchema);

@@ -39,7 +39,10 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Static uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '30d',
+  immutable: true,
+}));
 
 // API Routes
 app.use('/api/admin', authRoutes);
@@ -100,7 +103,7 @@ app.get('/sitemap.xml', async (req, res) => {
     });
 
     // Dynamic Products
-    const products = await Product.find({ isPublished: { $ne: false } });
+    const products = await Product.find({ isPublished: { $ne: false } }).select('slug updatedAt').lean();
     products.forEach(p => {
       // Standard flat route
       xml += `  <url>\n    <loc>${baseUrl}/${p.slug}</loc>\n    <lastmod>2026-06-08</lastmod>\n    <priority>0.7</priority>\n  </url>\n`;

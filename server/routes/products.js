@@ -3,26 +3,35 @@ const router = express.Router();
 const Product = require('../models/Product');
 const { protect } = require('../middleware/auth');
 
+const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // GET /api/products (public)
 router.get('/', async (req, res) => {
   try {
-    const { category, search, page = 1, limit = 20 } = req.query;
+    const { category, search, suggest } = req.query;
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const maxLimit = suggest ? 8 : 60;
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), maxLimit);
     const query = { isPublished: true };
     if (category) query.category = category;
-    if (search) {
+    const normalizedSearch = search?.trim();
+    if (normalizedSearch) {
+      const safeSearch = escapeRegex(normalizedSearch);
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { shortDescription: { $regex: search, $options: 'i' } },
-        { keywords: { $regex: search, $options: 'i' } },
+        { name: { $regex: safeSearch, $options: 'i' } },
+        { shortDescription: { $regex: safeSearch, $options: 'i' } },
+        { keywords: { $regex: safeSearch, $options: 'i' } },
       ];
     }
-    const total = await Product.countDocuments(query);
     const products = await Product.find(query)
+      .select('name slug category shortDescription images features keywords metaTitle metaDescription createdAt')
       .populate('category', 'name slug')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
-      .limit(parseInt(limit));
-    res.json({ products, total, page: parseInt(page), pages: Math.ceil(total / limit) });
+      .limit(limit)
+      .lean();
+    const total = suggest ? products.length : await Product.countDocuments(query);
+    res.json({ products, total, page, pages: Math.ceil(total / limit) });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -33,7 +42,8 @@ router.get('/:slug', async (req, res) => {
   try {
     const product = await Product.findOne({ slug: req.params.slug, isPublished: true })
       .populate('category', 'name slug')
-      .populate('relatedProducts', 'name slug images shortDescription');
+      .populate('relatedProducts', 'name slug images shortDescription')
+      .lean();
     if (!product) return res.status(404).json({ message: 'Product not found' });
     res.json(product);
   } catch (error) {

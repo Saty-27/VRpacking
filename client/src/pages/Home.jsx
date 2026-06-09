@@ -370,7 +370,7 @@ export default function Home() {
                   onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
                   <div style={{ height: 210, position: 'relative', overflow: 'hidden' }}>
                     {p.images && p.images[0]
-                      ? <img src={p.images[0].startsWith('http') ? p.images[0] : `${API_URL}${p.images[0]}`} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s' }} />
+                      ? <img src={p.images[0].startsWith('http') ? p.images[0] : `${API_URL}${p.images[0]}`} alt={p.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s' }} />
                       : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--grey-light)' }}><FaBoxOpen size={44} color="var(--grey)" /></div>
                     }
                     {p.category?.name && (
@@ -516,6 +516,8 @@ export default function Home() {
                     <img
                       src={img.image ? (img.image.startsWith('http') ? img.image : `${API_URL}${img.image}`) : '/uploads/product_placeholder.png'}
                       alt={img.title || 'Packaging work'}
+                      loading="lazy"
+                      decoding="async"
                       style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s' }}
                       onMouseOver={e => e.currentTarget.style.transform = 'scale(1.06)'}
                       onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
@@ -555,6 +557,8 @@ export default function Home() {
                     <img
                       src={video.image.startsWith('http') ? video.image : `${API_URL}${video.image}`}
                       alt={video.title || video.category || 'Packaging video'}
+                      loading="lazy"
+                      decoding="async"
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   ) : (
@@ -589,7 +593,7 @@ export default function Home() {
                 <div key={blog._id || blog.slug} className="card blog-card">
                   <div className="blog-image">
                     {blog.featuredImage ? (
-                      <img src={blog.featuredImage.startsWith('http') ? blog.featuredImage : `${API_URL}${blog.featuredImage}`} alt={blog.title} />
+                      <img src={blog.featuredImage.startsWith('http') ? blog.featuredImage : `${API_URL}${blog.featuredImage}`} alt={blog.title} loading="lazy" decoding="async" />
                     ) : (
                       <FaGlobe size={34} color="var(--grey)" opacity={0.35} />
                     )}

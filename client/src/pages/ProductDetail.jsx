@@ -152,7 +152,7 @@ export default function ProductDetail({ seoSlug }) {
       <section className="section"><div className="container">
         <div className="product-detail-grid">
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} className="product-detail-image-wrapper">
-            {product.images && product.images[0] ? <img src={product.images[0].startsWith('http') ? product.images[0] : `${API_URL}${product.images[0]}`} alt={product.name} /> : <FaBoxOpen size={80} color="var(--blue)"/>}
+            {product.images && product.images[0] ? <img src={product.images[0].startsWith('http') ? product.images[0] : `${API_URL}${product.images[0]}`} alt={product.name} loading="eager" decoding="async" /> : <FaBoxOpen size={80} color="var(--blue)"/>}
           </motion.div>
           <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} className="product-detail-info-wrapper">
             <span className="badge badge-blue">{product.category?.name || 'Product'}</span>
@@ -265,7 +265,7 @@ export default function ProductDetail({ seoSlug }) {
 
       {product.benefits?.length>0 && <section className="section section-grey"><div className="container"><div className="section-header"><h2>Benefits</h2></div><div className="grid grid-2">{product.benefits.map((b,i)=><div key={i} style={{display:'flex',gap:10,alignItems:'center'}}><FaCheckCircle style={{color:'var(--orange)'}}/><span>{b}</span></div>)}</div></div></section>}
 
-      {product.relatedProducts?.length>0 && <section className="section"><div className="container"><div className="section-header"><h2>Related Products</h2></div><div className="grid grid-3">{product.relatedProducts.map(r=><div key={r._id} className="card product-card glass"><div className="product-image">{r.images && r.images[0] ? <img src={r.images[0]} alt={r.name} /> : <FaBoxOpen size={30} color="var(--blue)"/>}</div><div className="product-content"><h3>{r.name}</h3><Link to={`/${r.slug}`} className="btn btn-primary btn-sm">View Details</Link></div></div>)}</div></div></section>}
+      {product.relatedProducts?.length>0 && <section className="section"><div className="container"><div className="section-header"><h2>Related Products</h2></div><div className="grid grid-3">{product.relatedProducts.map(r=><div key={r._id} className="card product-card glass"><div className="product-image">{r.images && r.images[0] ? <img src={r.images[0].startsWith('http') ? r.images[0] : `${API_URL}${r.images[0]}`} alt={r.name} loading="lazy" decoding="async" /> : <FaBoxOpen size={30} color="var(--blue)"/>}</div><div className="product-content"><h3>{r.name}</h3><Link to={`/${r.slug}`} className="btn btn-primary btn-sm">View Details</Link></div></div>)}</div></div></section>}
 
       {faqs.length>0 && <section className="section section-grey"><div className="container"><div className="section-header"><h2>Product FAQs</h2></div><div className="faq-list">{faqs.map((f,i)=><div key={f._id} className={`faq-item ${openFaq===i?'open':''}`}><button className="faq-question" onClick={()=>setOpenFaq(openFaq===i?null:i)}><span>{f.question}</span><FaChevronDown className="faq-arrow"/></button><div className="faq-answer"><p>{f.answer}</p></div></div>)}</div></div></section>}
 
